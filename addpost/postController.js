@@ -49,11 +49,11 @@ const addPost = async (req, res) => {
     if (!image) {
       return res.json({ message: 'Image is required' });
     }
+  
     if (req.body['tags[]']) {
       const allTags = new Tags({ tags: req.body['tags[]'] });
       await allTags.save();
     }
-
     await newPost.save();
 
     await user.updateOne({
@@ -112,7 +112,7 @@ const getAllTags = async (req, res) => {
     const tags = await Tags.find();
     const tagsWithoutID = tags.map((tag) => tag.tags);
     const concataedAllTags = [].concat(...tagsWithoutID);
-
+   
     return res.json(concataedAllTags);
   } catch (e) {
     console.log(e);
@@ -137,7 +137,6 @@ const likePost = async (req, res) => {
     const { postID } = req.body;
     const post = await Post.findById(postID);
     const isLiked = post.likes.some((like) => like === req.userId);
-
     if (!isLiked) {
       await post.updateOne({
         $push: { likes: req.userId },

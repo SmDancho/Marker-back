@@ -96,7 +96,7 @@ const googleVerify = async (req, res) => {
     const candidate = await User.findOne({ username });
 
     if (candidate) {
-      const token = generateAccessToken(candidate);
+      const token = generateAccessToken(candidate._id);
       return res.json({ token, user:candidate });
     }
 
@@ -104,7 +104,7 @@ const googleVerify = async (req, res) => {
 
     const user = new User({ username, password: Hashpassword });
     await user.save();
-    const token = generateAccessToken(user);
+    const token = generateAccessToken(user._id);
 
     return res.json({ user, token: token });
   } catch (e) {
