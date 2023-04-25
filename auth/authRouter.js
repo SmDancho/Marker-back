@@ -6,6 +6,8 @@ const {
   login,
   getMe,
   googleVerify,
+  getUsers,
+  getUserByid,
 } = require('./authController');
 
 const { body } = require('express-validator');
@@ -29,5 +31,11 @@ router.get('/getme', authMiddleware, (req, res) => {
 
 router.post('/google', (req, res) => {
   googleVerify(req, res);
+});
+router.get('/users', (req, res) => {
+  getUsers(req, res);
+});
+router.post('/getUserByid', (req, res) => {
+  getUserByid(req, res);
 });
 module.exports = router;

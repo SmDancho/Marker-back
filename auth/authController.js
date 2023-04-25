@@ -1,8 +1,8 @@
 const User = require('../models/user');
-
+const Role = require('../models/role');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+const { OAuth2Client } = require('google-auth-library');
 const { secret } = require('../config');
 
 const saltRounds = 10;
@@ -30,8 +30,12 @@ const registration = async (req, res) => {
     if (candidate) return res.json({ message: 'User already exist' });
 
     const Hashpassword = bcrypt.hashSync(password, saltRounds);
-
-    const user = new User({ username, password: Hashpassword });
+    const userRole = await Role.findOne({ value: 'USER' });
+    const user = new User({
+      username,
+      password: Hashpassword,
+      roles: [userRole.value],
+    });
     await user.save();
     const token = generateAccessToken(user._id);
 
@@ -46,6 +50,7 @@ const login = async (req, res) => {
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ username });
+
     if (!user) {
       return res.json({ message: `User ${username} is no defined` });
     }
@@ -57,7 +62,6 @@ const login = async (req, res) => {
     const token = generateAccessToken(user._id);
     return res.json({ user, token, message: 'Login successful' });
   } catch (e) {
-    console.log(e);
     return res.json({ message: `Login error ${e}` });
   }
 };
@@ -78,8 +82,27 @@ const getMe = async (req, res) => {
     res.json({ message: 'Нет доступа.' });
   }
 };
-const { OAuth2Client } = require('google-auth-library');
 
+const getUsers = async (_, res) => {
+  try {
+    const users = await User.find();
+
+    return res.json(users);
+  } catch (error) {
+    res.json({ message: error.message });
+  }
+};
+
+const getUserByid = async (req,res) => {
+  try {
+    const { id } = req.body;
+    const user = await User.findById(id);
+
+    return res.json(user);
+  } catch (error) {
+    res.json({ message: error.message });
+  }
+};
 const googleVerify = async (req, res) => {
   try {
     const { clientId, credential } = req.body;
@@ -97,7 +120,7 @@ const googleVerify = async (req, res) => {
 
     if (candidate) {
       const token = generateAccessToken(candidate._id);
-      return res.json({ token, user:candidate });
+      return res.json({ token, user: candidate });
     }
 
     const Hashpassword = bcrypt.hashSync(credential, saltRounds);
@@ -112,4 +135,4 @@ const googleVerify = async (req, res) => {
   }
 };
 
-module.exports = { registration, login, getMe, googleVerify };
+module.exports = { registration, login, getMe, googleVerify, getUsers,getUserByid };

@@ -22,7 +22,7 @@ const saveImageToCloudStorage = async (filename, buffer) => {
 
 const addPost = async (req, res) => {
   try {
-    const { title, text, topic, group, authorRaiting } = req.body;
+    const { title, text, topic, group, authorRaiting, userId } = req.body;
     const image = await saveImageToCloudStorage(
       req.files.image.name,
       req.files.image.data
@@ -33,7 +33,7 @@ const addPost = async (req, res) => {
       .catch((err) => {
         console.error('Error:', err);
       });
-    const user = await User.findById(req.userId);
+    const user = await User.findById(userId);
 
     const newPost = new Post({
       author: user.username,
@@ -49,7 +49,7 @@ const addPost = async (req, res) => {
     if (!image) {
       return res.json({ message: 'Image is required' });
     }
-  
+
     if (req.body['tags[]']) {
       const allTags = new Tags({ tags: req.body['tags[]'] });
       await allTags.save();
@@ -86,10 +86,13 @@ const postUpdate = async (req, res) => {
 
 const deletPost = async (req, res) => {
   try {
-    const { _id } = req.body;
-    await Post.findByIdAndDelete(_id);
-    await User.findOneAndUpdate(req.userId, {
-      $pull: { posts: _id },
+    const { postId, userId } = req.body;
+
+    const user = User.findById(userId);
+    console.log(user);
+    await Post.findByIdAndDelete(postId);
+    await user.updateOne({
+      $pull: { posts: postId },
     });
     return res.status(200).json({ message: 'deleted successfully' });
   } catch (e) {
@@ -98,28 +101,33 @@ const deletPost = async (req, res) => {
 };
 
 const getUserPost = async (req, res) => {
-  const user = await User.findById(req.userId);
-  const listOfPosts = await Promise.all(
-    user.posts.map((post) => {
-      return Post.findById(post._id);
-    })
-  );
-  return res.json(listOfPosts);
+  try {
+    const { id } = req.query;
+    const user = await User.findById(id);
+    const listOfPosts = await Promise.all(
+      user?.posts.map((post) => {
+        return Post.findById(post._id);
+      })
+    );
+    return res.json(listOfPosts);
+  } catch (e) {
+    console.log(e);
+  }
 };
 
-const getAllTags = async (req, res) => {
+const getAllTags = async (_, res) => {
   try {
     const tags = await Tags.find();
     const tagsWithoutID = tags.map((tag) => tag.tags);
     const concataedAllTags = [].concat(...tagsWithoutID);
-   
+
     return res.json(concataedAllTags);
   } catch (e) {
     console.log(e);
   }
 };
 
-const getAllTposts = async (req, res) => {
+const getAllTposts = async (_, res) => {
   const posts = await Post.find();
 
   return res.json(posts);
