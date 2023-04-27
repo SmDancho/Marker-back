@@ -93,7 +93,7 @@ const getUsers = async (_, res) => {
   }
 };
 
-const getUserByid = async (req,res) => {
+const getUserByid = async (req, res) => {
   try {
     const { id } = req.body;
     const user = await User.findById(id);
@@ -134,5 +134,37 @@ const googleVerify = async (req, res) => {
     console.log(e);
   }
 };
+const twitchAuth = async (req, res) => {
+  try {
+    const { login } = req.body;
 
-module.exports = { registration, login, getMe, googleVerify, getUsers,getUserByid };
+    const username = login;
+    const candidate = await User.findOne({ username });
+
+    if (candidate) {
+      const token = generateAccessToken(candidate._id);
+      return res.json({ token, user: candidate });
+    }
+
+    const Hashpassword = bcrypt.hashSync(login, saltRounds);
+
+    const user = new User({ username, password: Hashpassword });
+    await user.save();
+    const token = generateAccessToken(user._id);
+
+    return res.json({ user, token: token });
+    
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+module.exports = {
+  registration,
+  login,
+  getMe,
+  googleVerify,
+  getUsers,
+  getUserByid,
+  twitchAuth,
+};

@@ -189,7 +189,14 @@ const addRaiting = async (req, res) => {
     const isRated = post.raiting.some((like) => like.userId === req.userId);
 
     if (isRated) {
-      return res.json({ message: 'already rated' });
+      await post.updateOne({
+        $set: {
+          raiting: {
+            userId: user._id,
+            value,
+          },
+        },
+      });
     } else {
       await post.updateOne({
         $push: {
@@ -200,8 +207,8 @@ const addRaiting = async (req, res) => {
         },
       });
     }
-
-    return res.status(200).json({ message: 'reated' });
+    console.log(value)
+    return res.status(200).json({message:'rated'});
   } catch (e) {
     console.log(e);
   }

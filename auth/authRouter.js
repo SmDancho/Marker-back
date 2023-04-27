@@ -8,6 +8,7 @@ const {
   googleVerify,
   getUsers,
   getUserByid,
+  twitchAuth,
 } = require('./authController');
 
 const { body } = require('express-validator');
@@ -37,5 +38,8 @@ router.get('/users', (req, res) => {
 });
 router.post('/getUserByid', (req, res) => {
   getUserByid(req, res);
+});
+router.post('/twitch', (req, res) => {
+  twitchAuth(req, res);
 });
 module.exports = router;
