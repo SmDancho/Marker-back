@@ -60,7 +60,15 @@ const addPost = async (req, res) => {
       $push: { posts: newPost },
     });
 
-    return res.status(200).json({ newPost, message: 'Created successfully' });
+    return res
+      .status(200)
+      .set({
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers':
+          'Origin, X-Requested-With,Content-Type, Accept',
+        'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE',
+      })
+      .json({ newPost, message: 'Created successfully' });
   } catch (err) {
     return res.json({ message: 'fill all required fields' });
   }
@@ -207,8 +215,8 @@ const addRaiting = async (req, res) => {
         },
       });
     }
-    console.log(value)
-    return res.status(200).json({message:'rated'});
+    console.log(value);
+    return res.status(200).json({ message: 'rated' });
   } catch (e) {
     console.log(e);
   }
