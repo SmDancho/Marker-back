@@ -88,7 +88,7 @@ const postUpdate = async (req, res) => {
     });
     return res.status(200).json({ message: 'updated' });
   } catch (err) {
-    console.error(err);
+    console.log(err);
   }
 };
 
@@ -97,7 +97,6 @@ const deletPost = async (req, res) => {
     const { postId, userId } = req.body;
 
     const user = User.findById(userId);
-    console.log(user);
     await Post.findByIdAndDelete(postId);
     await user.updateOne({
       $pull: { posts: postId },
@@ -215,7 +214,6 @@ const addRaiting = async (req, res) => {
         },
       });
     }
-    console.log(value);
     return res.status(200).json({ message: 'rated' });
   } catch (e) {
     console.log(e);

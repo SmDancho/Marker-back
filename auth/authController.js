@@ -54,6 +54,9 @@ const login = async (req, res) => {
     if (!user) {
       return res.json({ message: `User ${username} is no defined` });
     }
+    if (user.roles.includes('BLOCKED')) {
+      return res.json({ message: 'user blocked' });
+    }
     const validPassword = bcrypt.compareSync(password, user.password);
 
     if (!validPassword) {
@@ -83,26 +86,6 @@ const getMe = async (req, res) => {
   }
 };
 
-const getUsers = async (_, res) => {
-  try {
-    const users = await User.find();
-
-    return res.json(users);
-  } catch (error) {
-    res.json({ message: error.message });
-  }
-};
-
-const getUserByid = async (req, res) => {
-  try {
-    const { id } = req.body;
-    const user = await User.findById(id);
-
-    return res.json(user);
-  } catch (error) {
-    res.json({ message: error.message });
-  }
-};
 const googleVerify = async (req, res) => {
   try {
     const { clientId, credential } = req.body;
@@ -153,7 +136,6 @@ const twitchAuth = async (req, res) => {
     const token = generateAccessToken(user._id);
 
     return res.json({ user, token: token });
-    
   } catch (e) {
     console.log(e);
   }
@@ -164,7 +146,5 @@ module.exports = {
   login,
   getMe,
   googleVerify,
-  getUsers,
-  getUserByid,
   twitchAuth,
 };

@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const authRouter = require('./auth/authRouter');
 const postRouter = require('./addpost/postRouter');
 const searchRouter = require('./search/searchRouter');
+const userRouter = require('./users/userRouter');
 
 const fileupload = require('express-fileupload');
 
@@ -19,6 +20,7 @@ app.use(cors());
 app.use('/auth', authRouter);
 app.use('/post', postRouter);
 app.use('/search', searchRouter);
+app.use('/users', userRouter);
 
 const start = async () => {
   try {
