@@ -9,7 +9,7 @@ const bucketName = 'itransitionpostimg';
 const saveImageToCloudStorage = async (filename, buffer) => {
   const bucket = storage.bucket(bucketName);
 
-  const file = bucket.file(filename);
+  const file = await bucket.file(filename);
   await file.save(buffer);
 
   const url = await file.getSignedUrl({
@@ -23,24 +23,51 @@ const saveImageToCloudStorage = async (filename, buffer) => {
 const addPost = async (req, res) => {
   try {
     const { title, text, topic, group, authorRaiting, userId } = req.body;
-    const image = await saveImageToCloudStorage(
-      req.files.image.name,
-      req.files.image.data
-    )
-      .then((url) => {
-        return String(url);
-      })
-      .catch((err) => {
-        console.error('Error:', err);
-      });
+
+    const image =
+      req.files['image[]'].length > 1
+        ? await req.files['image[]'].map(async (img) => {
+            const url = await saveImageToCloudStorage(img.name, img.data).then(
+              (url) => String(url)
+            );
+
+            return url;
+          })
+        : await saveImageToCloudStorage(
+            req.files['image[]'].name,
+            req.files['image[]'].data
+          ).then((url) => String(url));
+
+    const urls =
+      req.files['image[]'].length > 1 ? await Promise.all(image) : image;
     const user = await User.findById(userId);
+
+    const deletePtag = text.replace(/<p[^>]*>/g, '').replace(/<\/p>/g, '');
+
+    const hasDuplicates = async () => {
+      if (req.body['tags[]']) {
+        const getTagsFromDb = await Tags.find();
+        const filteredTags = getTagsFromDb.map((tag) => tag.tags);
+        const unWrapp = [].concat(...filteredTags);
+        const combineTags = [...unWrapp, req.body['tags[]']];
+
+        if (new Set(combineTags).size !== combineTags.length) {
+          return false;
+        } else {
+          const allTags = new Tags({ tags: req.body['tags[]'] });
+          await allTags.save();
+        }
+      }
+    };
+
+    await hasDuplicates();
 
     const newPost = new Post({
       author: user.username,
       title,
-      text,
+      text: deletePtag,
       topic,
-      image,
+      image: urls,
       group,
       likes: [],
       tags: req.body['tags[]'],
@@ -50,27 +77,16 @@ const addPost = async (req, res) => {
       return res.json({ message: 'Image is required' });
     }
 
-    if (req.body['tags[]']) {
-      const allTags = new Tags({ tags: req.body['tags[]'] });
-      await allTags.save();
-    }
     await newPost.save();
 
     await user.updateOne({
       $push: { posts: newPost },
     });
 
-    return res
-      .status(200)
-      .set({
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers':
-          'Origin, X-Requested-With,Content-Type, Accept',
-        'Access-Control-Allow-Methods': 'GET,PUT,POST,DELETE',
-      })
-      .json({ newPost, message: 'Created successfully' });
+    return res.status(200).json({ newPost, message: 'Created successfully' });
   } catch (err) {
-    return res.json({ message: 'fill all required fields' });
+    console.log(err);
+    return res.json({ message: err.message });
   }
 };
 

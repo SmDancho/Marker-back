@@ -57,6 +57,9 @@ const login = async (req, res) => {
     if (user.roles.includes('BLOCKED')) {
       return res.json({ message: 'user blocked' });
     }
+    if (user.roles.includes('DELETED')) {
+      return res.json({ message: 'user deleted' });
+    }
     const validPassword = bcrypt.compareSync(password, user.password);
 
     if (!validPassword) {

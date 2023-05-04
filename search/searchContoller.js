@@ -10,6 +10,7 @@ const search = async (req, res) => {
         { topic: searchRegex },
         { text: searchRegex },
         { group: searchRegex },
+        { tags: searchRegex },
         { 'comments.text': searchRegex },
       ],
     }).exec((err, articles) => {
