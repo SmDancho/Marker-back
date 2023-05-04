@@ -1,4 +1,5 @@
 # dependencies
+*.env
 /node_modules
 /.pnp
 .pnp.js
@@ -13,7 +14,7 @@ opp.js
 # misc
 
 .DS_Store
-.env
+
 
 npm-debug.log*
 yarn-debug.log*
