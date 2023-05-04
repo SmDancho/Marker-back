@@ -20,47 +20,51 @@ const saveImageToCloudStorage = async (filename, buffer) => {
   return url;
 };
 
+const creatUrl = (images) => {
+  const image =
+  images.length > 1
+    ? await images.map(async (img) => {
+        const url = await saveImageToCloudStorage(img.name, img.data).then(
+          (url) => String(url)
+        );
+
+        return url;
+      })
+    : await saveImageToCloudStorage(
+      images.name,
+      images.data
+      ).then((url) => String(url));
+
+
+  return req.files['image[]'].length > 1 ? await Promise.all(image) : image;
+}
+
+const hasDuplicates = async (tags) => {
+  if (tags.length) {
+    const getTagsFromDb = await Tags.find();
+    const filteredTags = getTagsFromDb.map((tag) => tag.tags);
+    const unWrapp = [].concat(...filteredTags);
+    const combineTags = [...unWrapp, req.body['tags[]']];
+
+    if (new Set(combineTags).size !== combineTags.length) {
+      return false;
+    } else {
+      const allTags = new Tags({ tags: req.body['tags[]'] });
+      await allTags.save();
+    }
+  }
+};
+
 const addPost = async (req, res) => {
   try {
     const { title, text, topic, group, authorRaiting, userId } = req.body;
-
-    const image =
-      req.files['image[]'].length > 1
-        ? await req.files['image[]'].map(async (img) => {
-            const url = await saveImageToCloudStorage(img.name, img.data).then(
-              (url) => String(url)
-            );
-
-            return url;
-          })
-        : await saveImageToCloudStorage(
-            req.files['image[]'].name,
-            req.files['image[]'].data
-          ).then((url) => String(url));
-
-    const urls =
-      req.files['image[]'].length > 1 ? await Promise.all(image) : image;
-    const user = await User.findById(userId);
-
     const deletePtag = text.replace(/<p[^>]*>/g, '').replace(/<\/p>/g, '');
 
-    const hasDuplicates = async () => {
-      if (req.body['tags[]']) {
-        const getTagsFromDb = await Tags.find();
-        const filteredTags = getTagsFromDb.map((tag) => tag.tags);
-        const unWrapp = [].concat(...filteredTags);
-        const combineTags = [...unWrapp, req.body['tags[]']];
+    const urls = creatUrl(req.files['image[]'])
 
-        if (new Set(combineTags).size !== combineTags.length) {
-          return false;
-        } else {
-          const allTags = new Tags({ tags: req.body['tags[]'] });
-          await allTags.save();
-        }
-      }
-    };
+    const user = await User.findById(userId);
 
-    await hasDuplicates();
+    await hasDuplicates(req.body['tags[]']);
 
     const newPost = new Post({
       author: user.username,
@@ -92,12 +96,14 @@ const addPost = async (req, res) => {
 
 const postUpdate = async (req, res) => {
   try {
-    const { postID, text, title, topic, authorRaiting } = req.body;
+    const { postId, text, title, topic, authorRaiting } = req.body;
 
-    const post = await Post.findById(postID);
+    const deletePtagText = text.replace(/<p[^>]*>/g, '').replace(/<\/p>/g, '');
+
+    const post = await Post.findById(postId);
 
     await post.updateOne({
-      text,
+      text: deletePtagText,
       title,
       topic,
       authorRaiting,
