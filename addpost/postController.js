@@ -1,23 +1,21 @@
 const User = require('../models/user');
 const Post = require('../models/post');
 const Tags = require('../models/tags');
-const { Storage } = require('@google-cloud/storage');
-const { creatUrl, hasDuplicates } = require('../helpers/functions.js');
+
+const { creatUrl } = require('../helpers/saveImgtoCloud.js');
 
 const addPost = async (req, res) => {
   try {
     const { title, text, topic, group, authorRaiting, userId } = req.body;
-    const deletePtag = text.replace(/<p[^>]*>/g, '').replace(/<\/p>/g, '');
+    const textWithOutPtag = text.replace(/<p[^>]*>/g, '').replace(/<\/p>/g, '');
     const user = await User.findById(userId);
 
-    const urls = creatUrl(req.files['image[]']);
-
-    hasDuplicates(req.body['tags[]']);
-
+    const urls = await creatUrl(req.files['image[]']);
+  
     const newPost = new Post({
       author: user.username,
       title,
-      text: deletePtag,
+      text: textWithOutPtag,
       topic,
       image: urls,
       group,
@@ -25,9 +23,6 @@ const addPost = async (req, res) => {
       tags: req.body['tags[]'],
       authorRaiting,
     });
-    if (!image) {
-      return res.json({ message: 'Image is required' });
-    }
 
     await newPost.save();
 
@@ -38,7 +33,7 @@ const addPost = async (req, res) => {
     return res.status(200).json({ newPost, message: 'Created successfully' });
   } catch (err) {
     console.log(err);
-    return res.json({ message: err.message });
+    return res.json();
   }
 };
 
