@@ -4,9 +4,9 @@ const cloudinary = require('cloudinary').v2;
 
 const saveImageToCloudStorage = async (buffer) => {
    cloudinary.config({
-    cloud_name: process.env.CLOUD_NAME,
+    cloud_name: "deyuwpbhc",
     api_key: "225781465317592",
-    api_secret: process.env.CLOUD_SECRET,
+    api_secret: "Ss2UT3se-ZUhe1WkU5JepyP1iIE",
   });
 
   return new Promise((resolve, reject) => {
