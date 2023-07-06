@@ -3,9 +3,9 @@ const { Storage } = require('@google-cloud/storage');
 const cloudinary = require('cloudinary').v2;
 
 const saveImageToCloudStorage = async (buffer) => {
-  cloudinary.config({
+   cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
-    api_key: process.env.CLOUD_KEY,
+    api_key: "225781465317592",
     api_secret: process.env.CLOUD_SECRET,
   });
 
