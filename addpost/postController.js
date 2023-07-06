@@ -10,8 +10,8 @@ const addPost = async (req, res) => {
     const textWithOutPtag = text.replace(/<p[^>]*>/g, '').replace(/<\/p>/g, '');
     const user = await User.findById(userId);
 
-    const urls = await creatUrl(req.files['image[]']);
-  
+    const urls = await creatUrl(req.files['image[]']).then((url) => url);
+
     const newPost = new Post({
       author: user.username,
       title,
@@ -32,8 +32,7 @@ const addPost = async (req, res) => {
 
     return res.status(200).json({ newPost, message: 'Created successfully' });
   } catch (err) {
-    console.log(err);
-    return res.json();
+
   }
 };
 

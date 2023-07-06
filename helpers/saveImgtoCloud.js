@@ -1,42 +1,40 @@
-
 const { Storage } = require('@google-cloud/storage');
 
-const saveImageToCloudStorage = async (filename, buffer) => {
-  const storage = new Storage();
-  const bucketName = 'itransitionpostimg';
-  const bucket = storage.bucket(bucketName);
+const cloudinary = require('cloudinary').v2;
 
-  const file = bucket.file(filename);
-  await file.save(buffer);
-
-  const url = await file.getSignedUrl({
-    action: 'read',
-    expires: '2030-01-01',
+const saveImageToCloudStorage = async (buffer) => {
+  cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUD_KEY,
+    api_secret: process.env.CLOUD_SECRET,
   });
 
-  return url;
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream({ resource_type: 'image' }, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result.secure_url);
+        }
+      })
+      .end(buffer);
+  });
 };
-
 
 const creatUrl = async (images) => {
-  if (images.length > 1) {
-    const url = images.map((img) => {
-      return saveImageToCloudStorage(img.name, img.data).then((url) =>
-        String(url)
-      );
-    });
+  try {
+    if (images.length > 1) {
+       const urls = images.map(async (img) => await saveImageToCloudStorage(img.data));
+       return Promise.all(urls)
+    }
 
-    return Promise.all(url);
+    return await saveImageToCloudStorage(images.data);
+  } catch (e) {
+    console.log(e);
   }
-
-  const url = await saveImageToCloudStorage(images.name, images.data).then(
-    (url) => String(url)
-  );
-  return url;
 };
-
 
 module.exports = {
   creatUrl,
-
 };
